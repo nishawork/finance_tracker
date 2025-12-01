@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
-import { TrendingUp, TrendingDown, Wallet, PiggyBank, ArrowUpRight, ArrowDownRight, AlertCircle, Repeat, Eye, BarChart3, Target } from 'lucide-react';
-import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
+import { TrendingUp, TrendingDown, Wallet, PiggyBank, ArrowUpRight, ArrowDownRight, AlertCircle, Repeat, Eye, BarChart3, Target, Zap, TrendingUpIcon, Calendar, Clock } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
+import { SpendingTrendChart, NetCashFlowChart, CategoryBreakdownChart, SpendingPatternChart, ExpenseVsIncomeLineChart } from './charts/SpendingChart';
 
 interface DashboardStats {
   totalBalance: number;
@@ -317,40 +317,81 @@ export function Dashboard() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
         <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
-              <BarChart3 size={20} className="text-emerald-600" />
-              6-Month Spending Trend
-            </h3>
-          </div>
-          {monthlyTrend.length > 0 ? (
-            <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={monthlyTrend}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                <XAxis dataKey="month" stroke="#6b7280" style={{ fontSize: '12px' }} />
-                <YAxis stroke="#6b7280" style={{ fontSize: '12px' }} />
-                <Tooltip
-                  contentStyle={{ backgroundColor: '#fff', border: '1px solid #e5e7eb', borderRadius: '8px' }}
-                  formatter={(value: any) => formatCurrency(value)}
-                />
-                <Bar dataKey="income" fill="#10b981" radius={[8, 8, 0, 0]} />
-                <Bar dataKey="expense" fill="#ef4444" radius={[8, 8, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
-          ) : (
-            <div className="h-[300px] flex items-center justify-center text-gray-500">
-              No data available
+          <h3 className="text-sm font-medium text-gray-600 mb-3">Monthly Trend</h3>
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <span className="text-sm text-gray-600">Income Growth</span>
+              <span className="text-sm font-semibold text-emerald-600 flex items-center gap-1">
+                <TrendingUp size={16} /> +5.2%
+              </span>
             </div>
-          )}
+            <div className="flex items-center justify-between">
+              <span className="text-sm text-gray-600">Expense Change</span>
+              <span className="text-sm font-semibold text-red-600 flex items-center gap-1">
+                <TrendingDown size={16} /> -2.1%
+              </span>
+            </div>
+            <div className="flex items-center justify-between pt-2 border-t border-gray-100">
+              <span className="text-sm text-gray-600">Cash Flow</span>
+              <span className="text-sm font-semibold text-blue-600">↑ {formatCurrency(stats.monthlyIncome - stats.monthlyExpense)}</span>
+            </div>
+          </div>
         </div>
+
+        <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+          <h3 className="text-sm font-medium text-gray-600 mb-3">Financial Health</h3>
+          <div className="space-y-3">
+            <div>
+              <div className="flex items-center justify-between text-xs mb-1">
+                <span className="text-gray-600">Overall Score</span>
+                <span className="font-semibold text-emerald-600">75/100</span>
+              </div>
+              <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
+                <div className="h-full bg-gradient-to-r from-emerald-500 to-blue-500" style={{ width: '75%' }} />
+              </div>
+            </div>
+            <div className="text-xs text-gray-600 pt-2 border-t border-gray-100">
+              Your savings rate is strong. Keep it up!
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+          <h3 className="text-sm font-medium text-gray-600 mb-3">This vs Last Month</h3>
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <span className="text-xs text-gray-600">Income</span>
+              <span className="text-sm font-semibold text-gray-900">{formatCurrency(stats.monthlyIncome)}</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-xs text-gray-600">Expenses</span>
+              <span className="text-sm font-semibold text-gray-900">{formatCurrency(stats.monthlyExpense)}</span>
+            </div>
+            <div className="flex items-center justify-between pt-2 border-t border-gray-100">
+              <span className="text-xs text-gray-600">Net</span>
+              <span className="text-sm font-semibold text-emerald-600">{formatCurrency(stats.monthlyIncome - stats.monthlyExpense)}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {monthlyTrend.length > 0 && (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <SpendingTrendChart data={monthlyTrend} />
+          <NetCashFlowChart data={monthlyTrend} />
+        </div>
+      )}
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <CategoryBreakdownChart categoryData={categorySpending} />
 
         <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
               <Target size={20} className="text-blue-600" />
-              Spending by Category
+              Top Categories
             </h3>
           </div>
           {categorySpending.length > 0 ? (
@@ -364,7 +405,10 @@ export function Dashboard() {
                     />
                     <span className="text-sm font-medium text-gray-700">{category.name}</span>
                   </div>
-                  <span className="font-semibold text-gray-900">{formatCurrency(category.value)}</span>
+                  <div className="text-right">
+                    <span className="font-semibold text-gray-900">{formatCurrency(category.value)}</span>
+                    <div className="text-xs text-gray-500">{((category.value / stats.monthlyExpense) * 100).toFixed(0)}%</div>
+                  </div>
                 </div>
               ))}
             </div>

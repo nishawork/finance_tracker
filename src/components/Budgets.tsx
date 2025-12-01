@@ -129,6 +129,37 @@ export function Budgets() {
     return <TrendingUp className="text-emerald-500" size={20} />;
   };
 
+  const CircularProgressRing = ({ percentage, size = 120 }: { percentage: number; size?: number }) => {
+    const radius = (size - 10) / 2;
+    const circumference = 2 * Math.PI * radius;
+    const strokeDashoffset = circumference - (percentage / 100) * circumference;
+
+    return (
+      <svg width={size} height={size} className="transform -rotate-90">
+        <circle
+          cx={size / 2}
+          cy={size / 2}
+          r={radius}
+          fill="none"
+          stroke="#e5e7eb"
+          strokeWidth="4"
+        />
+        <circle
+          cx={size / 2}
+          cy={size / 2}
+          r={radius}
+          fill="none"
+          stroke={percentage >= 100 ? '#ef4444' : percentage >= 80 ? '#f59e0b' : '#10b981'}
+          strokeWidth="4"
+          strokeDasharray={circumference}
+          strokeDashoffset={strokeDashoffset}
+          strokeLinecap="round"
+          className="transition-all duration-500"
+        />
+      </svg>
+    );
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -167,60 +198,64 @@ export function Budgets() {
           </button>
         </div>
       ) : (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {budgets.map((budget) => (
-            <div key={budget.id} className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
-              <div className="flex items-start justify-between mb-4">
-                <div>
-                  <h3 className="font-semibold text-gray-900 text-lg">{budget.name}</h3>
-                  {budget.category_name && (
-                    <p className="text-sm text-gray-500 mt-1">{budget.category_name}</p>
-                  )}
-                  <p className="text-xs text-gray-400 mt-1 capitalize">{budget.period}</p>
+            <div key={budget.id} className="bg-white rounded-xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition">
+              <div className="space-y-4">
+                <div className="flex items-start justify-between">
+                  <div className="flex-1">
+                    <h3 className="font-semibold text-gray-900 text-base">{budget.name}</h3>
+                    {budget.category_name && (
+                      <p className="text-xs text-gray-500 mt-1">{budget.category_name}</p>
+                    )}
+                    <p className="text-xs text-gray-400 mt-1 capitalize">{budget.period}</p>
+                  </div>
                 </div>
-                {getStatusIcon(budget.percentage)}
-              </div>
 
-              <div className="space-y-3">
-                <div>
-                  <div className="flex items-center justify-between text-sm mb-2">
-                    <span className="text-gray-600">
-                      {formatCurrency(budget.spent)} of {formatCurrency(budget.amount)}
-                    </span>
+                <div className="flex items-center justify-center">
+                  <div className="relative">
+                    <CircularProgressRing percentage={Math.min(budget.percentage, 100)} size={100} />
+                    <div className="absolute inset-0 flex flex-col items-center justify-center">
+                      <span className={`text-sm font-bold ${
+                        budget.percentage >= 100 ? 'text-red-600' :
+                        budget.percentage >= 80 ? 'text-amber-600' :
+                        'text-emerald-600'
+                      }`}>
+                        {budget.percentage.toFixed(0)}%
+                      </span>
+                      <span className="text-xs text-gray-500">of limit</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="space-y-2 text-sm">
+                  <div className="flex items-center justify-between">
+                    <span className="text-gray-600">Spent</span>
+                    <span className="font-semibold text-gray-900">{formatCurrency(budget.spent)}</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-gray-600">Limit</span>
+                    <span className="font-semibold text-gray-900">{formatCurrency(budget.amount)}</span>
+                  </div>
+                  <div className="flex items-center justify-between pt-2 border-t border-gray-100">
+                    <span className="text-gray-600">Remaining</span>
                     <span className={`font-semibold ${
-                      budget.percentage >= 100 ? 'text-red-600' :
-                      budget.percentage >= 80 ? 'text-amber-600' :
-                      'text-emerald-600'
+                      budget.amount - budget.spent >= 0 ? 'text-emerald-600' : 'text-red-600'
                     }`}>
-                      {budget.percentage.toFixed(0)}%
+                      {formatCurrency(Math.max(0, budget.amount - budget.spent))}
                     </span>
                   </div>
-                  <div className="w-full bg-gray-200 rounded-full h-3 overflow-hidden">
-                    <div
-                      className={`h-full transition-all duration-300 ${getProgressColor(budget.percentage)}`}
-                      style={{ width: `${Math.min(budget.percentage, 100)}%` }}
-                    />
-                  </div>
-                </div>
-
-                <div className="flex items-center justify-between text-sm pt-2">
-                  <span className="text-gray-600">Remaining</span>
-                  <span className={`font-semibold ${
-                    budget.amount - budget.spent >= 0 ? 'text-emerald-600' : 'text-red-600'
-                  }`}>
-                    {formatCurrency(Math.max(0, budget.amount - budget.spent))}
-                  </span>
                 </div>
 
                 {budget.percentage >= 80 && (
-                  <div className={`text-sm p-3 rounded-lg ${
+                  <div className={`text-xs p-2 rounded-lg text-center ${
                     budget.percentage >= 100
                       ? 'bg-red-50 text-red-700 border border-red-200'
                       : 'bg-amber-50 text-amber-700 border border-amber-200'
                   }`}>
                     {budget.percentage >= 100
-                      ? 'Budget exceeded! Consider reviewing your expenses.'
-                      : 'Approaching budget limit. Watch your spending!'}
+                      ? 'Budget exceeded'
+                      : 'Approaching limit'}
                   </div>
                 )}
               </div>

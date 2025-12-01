@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react';
-import { Download, TrendingUp, AlertCircle, Lightbulb, Zap } from 'lucide-react';
+import { Download, TrendingUp, AlertCircle, Lightbulb, Zap, FileDown, Share2, Calendar } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { generateFinancialReport, calculateFinancialScore, predictFutureSpending } from '../services/aiReportGenerator';
-import { SpendingTrendChart, CategoryBreakdownChart, SpendingPatternChart } from './charts/SpendingChart';
+import { SpendingTrendChart, CategoryBreakdownChart, SpendingPatternChart, ExpenseVsIncomeLineChart } from './charts/SpendingChart';
 
 interface CategoryData {
   name: string;
@@ -259,7 +259,12 @@ export function Reports() {
         </div>
       </div>
 
-      <SpendingTrendChart data={monthlyTrend} />
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <SpendingTrendChart data={monthlyTrend} />
+        <ExpenseVsIncomeLineChart data={monthlyTrend} />
+      </div>
+
+      <SpendingPatternChart data={monthlyTrend} />
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">

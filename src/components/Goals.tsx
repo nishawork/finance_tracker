@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Plus, Target, X } from 'lucide-react';
+import { Plus, Target, X, AlertCircle, CheckCircle2, TrendingUp, Zap } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 
@@ -79,6 +79,22 @@ export function Goals() {
     return days;
   };
 
+  const getMonthlyNeeded = (goal: Goal) => {
+    if (!goal.target_date) return null;
+    const daysLeft = getDaysRemaining(goal.target_date);
+    if (!daysLeft || daysLeft <= 0) return null;
+    const monthsLeft = daysLeft / 30;
+    const needed = (goal.target_amount - goal.current_amount) / monthsLeft;
+    return needed;
+  };
+
+  const getGoalStatus = (goal: Goal) => {
+    if (goal.percentage >= 100) return 'completed';
+    const daysRemaining = getDaysRemaining(goal.target_date);
+    if (daysRemaining !== null && daysRemaining < 0) return 'overdue';
+    return 'active';
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -120,23 +136,31 @@ export function Goals() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {goals.map((goal) => {
             const daysRemaining = getDaysRemaining(goal.target_date);
+            const monthlyNeeded = getMonthlyNeeded(goal);
+            const status = getGoalStatus(goal);
             return (
               <div
                 key={goal.id}
                 className="bg-white rounded-xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition"
               >
-                <div className="flex items-start gap-4 mb-4">
-                  <div
-                    className="w-14 h-14 rounded-xl flex items-center justify-center text-2xl"
-                    style={{ backgroundColor: goal.color + '20' }}
-                  >
-                    {goal.icon}
-                  </div>
-                  <div className="flex-1">
-                    <h3 className="font-semibold text-gray-900 text-lg">{goal.name}</h3>
-                    {goal.description && (
-                      <p className="text-sm text-gray-600 mt-1">{goal.description}</p>
-                    )}
+                <div className="flex items-start justify-between gap-4 mb-4">
+                  <div className="flex items-start gap-4 flex-1">
+                    <div
+                      className="w-14 h-14 rounded-xl flex items-center justify-center text-2xl flex-shrink-0"
+                      style={{ backgroundColor: goal.color + '20' }}
+                    >
+                      {goal.icon}
+                    </div>
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2">
+                        <h3 className="font-semibold text-gray-900 text-lg">{goal.name}</h3>
+                        {status === 'completed' && <CheckCircle2 className="text-emerald-600" size={18} />}
+                        {status === 'overdue' && <AlertCircle className="text-red-600" size={18} />}
+                      </div>
+                      {goal.description && (
+                        <p className="text-sm text-gray-600 mt-1">{goal.description}</p>
+                      )}
+                    </div>
                   </div>
                 </div>
 
@@ -158,11 +182,11 @@ export function Goals() {
                     </div>
                   </div>
 
-                  <div className="flex items-center justify-between pt-2 border-t border-gray-100">
+                  <div className="grid grid-cols-2 gap-3 pt-2 border-t border-gray-100">
                     <div>
                       <div className="text-xs text-gray-500">Remaining</div>
-                      <div className="font-semibold text-gray-900">
-                        {formatCurrency(goal.target_amount - goal.current_amount)}
+                      <div className="font-semibold text-gray-900 text-sm">
+                        {formatCurrency(Math.max(0, goal.target_amount - goal.current_amount))}
                       </div>
                     </div>
                     <div className="text-right">
@@ -170,13 +194,29 @@ export function Goals() {
                       <div className="font-medium text-gray-900 text-sm">
                         {formatDate(goal.target_date)}
                       </div>
-                      {daysRemaining !== null && (
-                        <div className={`text-xs ${daysRemaining < 30 ? 'text-amber-600' : 'text-gray-500'}`}>
-                          {daysRemaining > 0 ? `${daysRemaining} days left` : 'Overdue'}
-                        </div>
-                      )}
                     </div>
                   </div>
+
+                  {monthlyNeeded && monthlyNeeded > 0 && (
+                    <div className="flex items-center gap-2 p-2 bg-blue-50 rounded-lg">
+                      <TrendingUp size={16} className="text-blue-600 flex-shrink-0" />
+                      <div className="text-xs text-blue-700">
+                        Save <span className="font-semibold">{formatCurrency(monthlyNeeded)}</span>/month
+                      </div>
+                    </div>
+                  )}
+
+                  {daysRemaining !== null && (
+                    <div className={`text-xs p-2 rounded-lg text-center font-medium ${
+                      daysRemaining < 30 && daysRemaining > 0
+                        ? 'bg-amber-50 text-amber-700'
+                        : daysRemaining <= 0
+                        ? 'bg-red-50 text-red-700'
+                        : 'bg-emerald-50 text-emerald-700'
+                    }`}>
+                      {daysRemaining > 0 ? `${daysRemaining} days left` : daysRemaining === 0 ? 'Due today' : 'Overdue'}
+                    </div>
+                  )}
                 </div>
               </div>
             );

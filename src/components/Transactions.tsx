@@ -232,6 +232,8 @@ export function Transactions() {
     });
   };
 
+  const [amountRange, setAmountRange] = useState<{ min: string; max: string }>({ min: '', max: '' });
+
   const filteredTransactions = transactions.filter((t) => {
     const matchesSearch =
       t.merchant?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -240,7 +242,11 @@ export function Transactions() {
 
     const matchesFilter = filterType === 'all' || t.type === filterType;
 
-    return matchesSearch && matchesFilter;
+    const minAmount = amountRange.min ? parseFloat(amountRange.min) : 0;
+    const maxAmount = amountRange.max ? parseFloat(amountRange.max) : Infinity;
+    const matchesAmount = t.amount >= minAmount && t.amount <= maxAmount;
+
+    return matchesSearch && matchesFilter && matchesAmount;
   });
 
   const totalIncome = filteredTransactions
@@ -363,6 +369,41 @@ export function Transactions() {
                     className="text-sm text-emerald-600 hover:text-emerald-700 whitespace-nowrap"
                   >
                     Clear
+                  </button>
+                )}
+              </div>
+            </div>
+
+            <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center">
+              <div className="flex items-center gap-2 flex-1">
+                <span className="text-sm text-gray-600 min-w-fit">Amount Range:</span>
+                <div className="relative flex-1">
+                  <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500">₹</span>
+                  <input
+                    type="number"
+                    placeholder="Min"
+                    value={amountRange.min}
+                    onChange={(e) => setAmountRange({ ...amountRange, min: e.target.value })}
+                    className="w-full pl-8 pr-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-emerald-500"
+                  />
+                </div>
+                <span className="text-gray-400">-</span>
+                <div className="relative flex-1">
+                  <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500">₹</span>
+                  <input
+                    type="number"
+                    placeholder="Max"
+                    value={amountRange.max}
+                    onChange={(e) => setAmountRange({ ...amountRange, max: e.target.value })}
+                    className="w-full pl-8 pr-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-emerald-500"
+                  />
+                </div>
+                {(amountRange.min || amountRange.max) && (
+                  <button
+                    onClick={() => setAmountRange({ min: '', max: '' })}
+                    className="text-sm text-emerald-600 hover:text-emerald-700 whitespace-nowrap"
+                  >
+                    Reset
                   </button>
                 )}
               </div>
