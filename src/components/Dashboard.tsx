@@ -412,13 +412,13 @@ export function Dashboard() {
             <div className="flex items-center justify-between">
               <span className="text-sm text-gray-600">Income Growth</span>
               <span className="text-sm font-semibold text-emerald-600 flex items-center gap-1">
-                <TrendingUp size={16} /> +5.2%
+                <TrendingUp size={16} /> {monthlyTrend.length >= 2 ? ((monthlyTrend[monthlyTrend.length - 1].income - monthlyTrend[monthlyTrend.length - 2].income) / monthlyTrend[monthlyTrend.length - 2].income * 100).toFixed(1) : '0'}%
               </span>
             </div>
             <div className="flex items-center justify-between">
               <span className="text-sm text-gray-600">Expense Change</span>
               <span className="text-sm font-semibold text-red-600 flex items-center gap-1">
-                <TrendingDown size={16} /> -2.1%
+                <TrendingDown size={16} /> {monthlyTrend.length >= 2 ? ((monthlyTrend[monthlyTrend.length - 1].expense - monthlyTrend[monthlyTrend.length - 2].expense) / monthlyTrend[monthlyTrend.length - 2].expense * 100).toFixed(1) : '0'}%
               </span>
             </div>
             <div className="flex items-center justify-between pt-2 border-t border-gray-100">

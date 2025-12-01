@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { ArrowUpRight, ArrowDownRight, Search, Filter, Edit2, Trash2, X, Check, Calendar, Upload, Eye } from 'lucide-react';
+import { ArrowUpRight, ArrowDownRight, Search, Filter, Edit2, Trash2, X, Check, Calendar, Upload, Eye, Trash, Copy } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { SMSImportModal } from './SMSImportModal';
@@ -30,6 +30,11 @@ interface Account {
   name: string;
 }
 
+interface BulkActionState {
+  selectedIds: Set<string>;
+  isSelecting: boolean;
+}
+
 export function Transactions() {
   const { user } = useAuth();
   const [transactions, setTransactions] = useState<Transaction[]>([]);
@@ -43,6 +48,9 @@ export function Transactions() {
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [showSMSImport, setShowSMSImport] = useState(false);
   const [showReceiptScanner, setShowReceiptScanner] = useState(false);
+  const [merchantSuggestions, setMerchantSuggestions] = useState<string[]>([]);
+  const [bulkSelection, setBulkSelection] = useState<BulkActionState>({ selectedIds: new Set(), isSelecting: false });
+  const [showBulkActions, setShowBulkActions] = useState(false);
 
   useEffect(() => {
     loadTransactions();
@@ -232,6 +240,49 @@ export function Transactions() {
     });
   };
 
+  const getMerchantSuggestions = async (input: string) => {
+    if (!input || input.length < 2) {
+      setMerchantSuggestions([]);
+      return;
+    }
+
+    const unique = [...new Set(transactions
+      .filter(t => t.merchant?.toLowerCase().includes(input.toLowerCase()))
+      .map(t => t.merchant)
+      .filter(Boolean))];
+
+    setMerchantSuggestions(unique.slice(0, 5));
+  };
+
+  const handleBulkSelect = (id: string) => {
+    const newSelected = new Set(bulkSelection.selectedIds);
+    if (newSelected.has(id)) {
+      newSelected.delete(id);
+    } else {
+      newSelected.add(id);
+    }
+    setBulkSelection({ ...bulkSelection, selectedIds: newSelected });
+  };
+
+  const handleSelectAll = () => {
+    if (bulkSelection.selectedIds.size === filteredTransactions.length) {
+      setBulkSelection({ selectedIds: new Set(), isSelecting: false });
+    } else {
+      const allIds = new Set(filteredTransactions.map(t => t.id));
+      setBulkSelection({ selectedIds: allIds, isSelecting: true });
+    }
+  };
+
+  const handleBulkDelete = async () => {
+    if (bulkSelection.selectedIds.size === 0) return;
+    if (!confirm(`Delete ${bulkSelection.selectedIds.size} transactions?`)) return;
+
+    for (const id of Array.from(bulkSelection.selectedIds)) {
+      await handleDelete(id);
+    }
+    setBulkSelection({ selectedIds: new Set(), isSelecting: false });
+  };
+
   const [amountRange, setAmountRange] = useState<{ min: string; max: string }>({ min: '', max: '' });
 
   const filteredTransactions = transactions.filter((t) => {
@@ -308,6 +359,34 @@ export function Transactions() {
           </div>
         </div>
       </div>
+
+      {bulkSelection.selectedIds.size > 0 && (
+        <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center text-blue-600 font-semibold">
+              {bulkSelection.selectedIds.size}
+            </div>
+            <span className="text-sm text-blue-700 font-medium">
+              {bulkSelection.selectedIds.size} transaction{bulkSelection.selectedIds.size !== 1 ? 's' : ''} selected
+            </span>
+          </div>
+          <div className="flex gap-2">
+            <button
+              onClick={() => setBulkSelection({ selectedIds: new Set(), isSelecting: false })}
+              className="px-3 py-2 text-sm font-medium text-blue-700 hover:bg-blue-100 rounded-lg transition"
+            >
+              Deselect
+            </button>
+            <button
+              onClick={handleBulkDelete}
+              className="px-3 py-2 text-sm font-medium text-white bg-red-600 hover:bg-red-700 rounded-lg transition flex items-center gap-2"
+            >
+              <Trash size={16} />
+              Delete
+            </button>
+          </div>
+        </div>
+      )}
 
       <div className="bg-white rounded-xl shadow-sm border border-gray-100">
         <div className="p-4 border-b border-gray-200">
@@ -419,7 +498,21 @@ export function Transactions() {
                 : 'No transactions yet. Add your first transaction!'}
             </div>
           ) : (
-            filteredTransactions.map((transaction) => (
+            <>
+              <div className="p-4 flex items-center gap-4 bg-gray-50 border-b border-gray-100">
+                <input
+                  type="checkbox"
+                  checked={bulkSelection.selectedIds.size === filteredTransactions.length && filteredTransactions.length > 0}
+                  onChange={handleSelectAll}
+                  className="w-5 h-5 rounded cursor-pointer"
+                />
+                <span className="text-sm text-gray-600 font-medium">
+                  {bulkSelection.selectedIds.size > 0
+                    ? `${bulkSelection.selectedIds.size} selected`
+                    : `${filteredTransactions.length} transactions`}
+                </span>
+              </div>
+              {filteredTransactions.map((transaction) => (
               <div key={transaction.id} className="p-4 hover:bg-gray-50 transition">
                 {editingId === transaction.id ? (
                   <EditTransactionRow
@@ -436,6 +529,12 @@ export function Transactions() {
                   />
                 ) : (
                   <div className="flex items-center justify-between gap-4">
+                    <input
+                      type="checkbox"
+                      checked={bulkSelection.selectedIds.has(transaction.id)}
+                      onChange={() => handleBulkSelect(transaction.id)}
+                      className="w-5 h-5 rounded cursor-pointer flex-shrink-0"
+                    />
                     <div className="flex items-center gap-4 flex-1 min-w-0">
                       <div
                         className={`w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 ${
@@ -488,7 +587,8 @@ export function Transactions() {
                   </div>
                 )}
               </div>
-            ))
+            ))}
+            </>
           )}
         </div>
       </div>

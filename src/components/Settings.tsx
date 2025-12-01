@@ -128,14 +128,56 @@ export function Settings() {
               </div>
             </div>
             <div className="space-y-3">
-              <button className="w-full px-4 py-2 text-left text-gray-700 hover:bg-gray-50 rounded-lg transition">
-                Change password
+              <button className="w-full px-4 py-2 text-left text-gray-700 hover:bg-gray-50 rounded-lg transition flex items-center justify-between">
+                <span>Change password</span>
+                <Lock size={16} className="text-gray-400" />
               </button>
-              <button className="w-full px-4 py-2 text-left text-gray-700 hover:bg-gray-50 rounded-lg transition">
-                Enable two-factor authentication
+              <button className="w-full px-4 py-2 text-left text-gray-700 hover:bg-gray-50 rounded-lg transition flex items-center justify-between">
+                <span>Enable two-factor authentication</span>
+                <Shield size={16} className="text-gray-400" />
               </button>
+              <div className="mt-3 p-3 bg-blue-50 rounded-lg border border-blue-200">
+                <p className="text-xs text-blue-700">
+                  <strong>Tip:</strong> Two-factor authentication adds an extra layer of security to your account by requiring a verification code in addition to your password.
+                </p>
+              </div>
             </div>
           </div>
+        </div>
+      </div>
+
+      <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+        <div className="flex items-center gap-3 mb-6">
+          <div className="w-12 h-12 bg-orange-50 rounded-lg flex items-center justify-center">
+            <AlertCircle className="text-orange-600" size={24} />
+          </div>
+          <div>
+            <h3 className="font-semibold text-gray-900 text-lg">Security Audit</h3>
+            <p className="text-sm text-gray-500">Your account activity and access logs</p>
+          </div>
+        </div>
+        <div className="space-y-3">
+          <div className="p-4 border border-gray-200 rounded-lg">
+            <div className="flex items-center justify-between">
+              <div>
+                <div className="text-sm font-medium text-gray-900">Last Login</div>
+                <div className="text-xs text-gray-500">Today at 2:30 PM</div>
+              </div>
+              <div className="text-xs font-semibold text-emerald-600">Active</div>
+            </div>
+          </div>
+          <div className="p-4 border border-gray-200 rounded-lg">
+            <div className="flex items-center justify-between">
+              <div>
+                <div className="text-sm font-medium text-gray-900">Login Attempts (Last 30 days)</div>
+                <div className="text-xs text-gray-500">12 successful, 0 failed</div>
+              </div>
+              <div className="text-sm font-semibold text-gray-900">12</div>
+            </div>
+          </div>
+          <button className="w-full px-4 py-2 text-sm text-blue-600 hover:bg-blue-50 rounded-lg transition font-medium">
+            View All Login Activity
+          </button>
         </div>
       </div>
 

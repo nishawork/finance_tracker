@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Plus, Target, TrendingUp, AlertCircle, X } from 'lucide-react';
+import { Plus, Target, TrendingUp, AlertCircle, X, TrendingDown, Award } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 

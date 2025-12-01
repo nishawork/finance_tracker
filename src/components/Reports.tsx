@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Download, TrendingUp, AlertCircle, Lightbulb, Zap, FileDown, Share2, Calendar } from 'lucide-react';
+import { Download, TrendingUp, AlertCircle, Lightbulb, Zap, FileDown, Share2, Calendar, PieChart, BarChart3, LineChart, Target } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { generateFinancialReport, calculateFinancialScore, predictFutureSpending } from '../services/aiReportGenerator';
@@ -34,25 +34,54 @@ export function Reports() {
     expense: 0,
     savings: 0,
   });
+  const [dateRange, setDateRange] = useState<{ from: string; to: string }>({
+    from: new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split('T')[0],
+    to: new Date().toISOString().split('T')[0],
+  });
+  const [reportPeriod, setReportPeriod] = useState<'month' | 'quarter' | '6months' | 'year'>('month');
 
   const COLORS = ['#10b981', '#f59e0b', '#ef4444', '#3b82f6', '#8b5cf6', '#ec4899', '#f97316', '#06b6d4'];
 
   useEffect(() => {
     loadReportsData();
-  }, [user]);
+  }, [user, dateRange, reportPeriod]);
+
+  const handlePeriodChange = (period: 'month' | 'quarter' | '6months' | 'year') => {
+    setReportPeriod(period);
+    const now = new Date();
+    let from = new Date();
+
+    switch (period) {
+      case 'month':
+        from = new Date(now.getFullYear(), now.getMonth(), 1);
+        break;
+      case 'quarter':
+        from = new Date(now.getFullYear(), Math.max(0, now.getMonth() - 2), 1);
+        break;
+      case '6months':
+        from = new Date(now.getFullYear(), Math.max(0, now.getMonth() - 5), 1);
+        break;
+      case 'year':
+        from = new Date(now.getFullYear() - 1, now.getMonth(), 1);
+        break;
+    }
+
+    setDateRange({
+      from: from.toISOString().split('T')[0],
+      to: now.toISOString().split('T')[0],
+    });
+  };
 
   const loadReportsData = async () => {
     if (!user) return;
-
-    const now = new Date();
-    const sixMonthsAgo = new Date(now.getFullYear(), now.getMonth() - 6, 1);
 
     const [transactionsRes, categoriesRes] = await Promise.all([
       supabase
         .from('transactions')
         .select('amount, type, transaction_date, category_id, categories(name, icon)')
         .eq('user_id', user.id)
-        .gte('transaction_date', sixMonthsAgo.toISOString().split('T')[0]),
+        .gte('transaction_date', dateRange.from)
+        .lte('transaction_date', dateRange.to),
 
       supabase
         .from('categories')
@@ -208,6 +237,68 @@ export function Reports() {
           <Download size={20} />
           Export PDF
         </button>
+      </div>
+
+      <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 justify-between">
+          <div className="flex flex-wrap gap-2">
+            <button
+              onClick={() => handlePeriodChange('month')}
+              className={`px-4 py-2 rounded-lg font-medium transition ${
+                reportPeriod === 'month'
+                  ? 'bg-emerald-500 text-white'
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+              }`}
+            >
+              This Month
+            </button>
+            <button
+              onClick={() => handlePeriodChange('quarter')}
+              className={`px-4 py-2 rounded-lg font-medium transition ${
+                reportPeriod === 'quarter'
+                  ? 'bg-emerald-500 text-white'
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+              }`}
+            >
+              Last 3 Months
+            </button>
+            <button
+              onClick={() => handlePeriodChange('6months')}
+              className={`px-4 py-2 rounded-lg font-medium transition ${
+                reportPeriod === '6months'
+                  ? 'bg-emerald-500 text-white'
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+              }`}
+            >
+              Last 6 Months
+            </button>
+            <button
+              onClick={() => handlePeriodChange('year')}
+              className={`px-4 py-2 rounded-lg font-medium transition ${
+                reportPeriod === 'year'
+                  ? 'bg-emerald-500 text-white'
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+              }`}
+            >
+              Last Year
+            </button>
+          </div>
+          <div className="flex gap-3 items-center">
+            <input
+              type="date"
+              value={dateRange.from}
+              onChange={(e) => setDateRange({ ...dateRange, from: e.target.value })}
+              className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-emerald-500"
+            />
+            <span className="text-gray-600">to</span>
+            <input
+              type="date"
+              value={dateRange.to}
+              onChange={(e) => setDateRange({ ...dateRange, to: e.target.value })}
+              className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-emerald-500"
+            />
+          </div>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
