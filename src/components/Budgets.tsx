@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Plus, Target, TrendingUp, AlertCircle, X, TrendingDown, Award } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
+import { CardSkeleton } from './utils/LoadingSkeletons';
 
 interface Budget {
   id: string;
@@ -162,8 +163,12 @@ export function Budgets() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-4 border-emerald-500 border-t-transparent"></div>
+      <div className="space-y-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {[1, 2, 3].map((i) => (
+            <CardSkeleton key={i} />
+          ))}
+        </div>
       </div>
     );
   }

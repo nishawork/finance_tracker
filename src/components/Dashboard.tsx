@@ -4,6 +4,7 @@ import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { SpendingTrendChart, NetCashFlowChart, CategoryBreakdownChart, SpendingPatternChart, ExpenseVsIncomeLineChart } from './charts/SpendingChart';
 import { aiFinancialAdvice } from '../services/aiFinancialAdvice';
+import { DashboardSkeleton } from './utils/LoadingSkeletons';
 
 interface DashboardStats {
   totalBalance: number;
@@ -347,11 +348,7 @@ export function Dashboard() {
   const COLORS = ['#10b981', '#f59e0b', '#ef4444', '#3b82f6', '#8b5cf6'];
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-4 border-emerald-500 border-t-transparent"></div>
-      </div>
-    );
+    return <DashboardSkeleton />;
   }
 
   return (

@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react';
-import { ArrowUpRight, ArrowDownRight, Search, Filter, Edit2, Trash2, X, Check, Calendar, Upload, Eye, Trash, Copy } from 'lucide-react';
+import { ArrowUpRight, ArrowDownRight, Search, Filter, Edit2, Trash2, X, Check, Calendar, Upload, Eye, Trash, Copy, Plus } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { SMSImportModal } from './SMSImportModal';
 import { ReceiptScannerModal } from './ReceiptScannerModal';
+import { TransactionListSkeleton, EmptyState } from './utils';
 
 interface Transaction {
   id: string;
